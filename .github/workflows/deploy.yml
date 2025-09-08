@@ -1,4 +1,3 @@
-
 name: Deploy PayFlow Pro to GitHub Pages
 
 on:
@@ -20,21 +19,21 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout í»Žï¸
+    - name: Checkout ï¿½ï¿½ï¿½ï¸
       uses: actions/checkout@v4
 
-    - name: Setup Node.js í³¦
+    - name: Setup Node.js ï¿½ï¿½ï¿½
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
         cache-dependency-path: frontend/package-lock.json
 
-    - name: Install Frontend Dependencies í´§
+    - name: Install Frontend Dependencies ï¿½ï¿½ï¿½
       working-directory: frontend
       run: npm ci
 
-    - name: Create Demo Environment í¼
+    - name: Create Demo Environment ï¿½ï¿½ï¿½
       working-directory: frontend
       run: |
         cat > .env.production << 'EOL'
@@ -45,14 +44,14 @@ jobs:
         REACT_APP_DEMO_MODE=true
         EOL
 
-    - name: Build React App í¿—ï¸
+    - name: Build React App ï¿½ï¿½ï¿½ï¸
       working-directory: frontend
       run: |
         npm run build
       env:
         PUBLIC_URL: /payflow-pro
 
-    - name: Create Demo API í³¡
+    - name: Create Demo API ï¿½ï¿½ï¿½
       run: |
         mkdir -p frontend/build/api
         cat > frontend/build/api/demo-data.json << 'EOL'
@@ -93,10 +92,10 @@ jobs:
         }
         EOL
 
-    - name: Setup Pages í³„
+    - name: Setup Pages ï¿½ï¿½ï¿½
       uses: actions/configure-pages@v4
 
-    - name: Upload Artifact í³¤
+    - name: Upload Artifact ï¿½ï¿½ï¿½
       uses: actions/upload-pages-artifact@v3
       with:
         path: frontend/build
@@ -109,6 +108,6 @@ jobs:
     needs: build
     
     steps:
-    - name: Deploy to GitHub Pages íº€
+    - name: Deploy to GitHub Pages ï¿½ï¿½ï¿½
       id: deployment
       uses: actions/deploy-pages@v4
