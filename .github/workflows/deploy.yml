@@ -1,3 +1,4 @@
+
 name: Deploy to GitHub Pages
 
 on:
@@ -13,43 +14,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
       
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
           
-      - name: Clean and Install Dependencies
+      - name: Install dependencies
         working-directory: frontend
         run: |
           rm -rf node_modules package-lock.json
-          npm install --legacy-peer-deps --no-optional
+          npm install
           
-      - name: Create Demo Environment
-        working-directory: frontend
-        run: |
-          echo "REACT_APP_API_BASE_URL=/payflow-pro/api" > .env.production
-          echo "REACT_APP_APP_NAME=PayFlow Pro - Live Demo" >> .env.production
-          echo "REACT_APP_VERSION=1.0.0" >> .env.production
-          echo "REACT_APP_ENVIRONMENT=demo" >> .env.production
-          echo "REACT_APP_DEMO_MODE=true" >> .env.production
-          echo "GENERATE_SOURCEMAP=false" >> .env.production
-          echo "DISABLE_ESLINT_PLUGIN=true" >> .env.production
-          echo "TSC_COMPILE_ON_ERROR=true" >> .env.production
-          echo "SKIP_PREFLIGHT_CHECK=true" >> .env.production
-          
-      - name: Build with TypeScript disabled
+      - name: Build with Vite
         working-directory: frontend
         run: npm run build
-        env:
-          PUBLIC_URL: /payflow-pro
-          CI: false
-          DISABLE_ESLINT_PLUGIN: true
-          TSC_COMPILE_ON_ERROR: true
-          SKIP_PREFLIGHT_CHECK: true
-          GENERATE_SOURCEMAP: false
-          NODE_OPTIONS: "--max-old-space-size=4096"
           
       - name: Create 404 page
         run: cp frontend/build/index.html frontend/build/404.html
