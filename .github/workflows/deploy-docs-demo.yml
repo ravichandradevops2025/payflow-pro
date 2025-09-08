@@ -1,0 +1,47 @@
+
+name: Deploy Documentation + Demo
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout ÌªéÔ∏è
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js Ì≥¶
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install Dependencies Ì¥ß
+      working-directory: frontend
+      run: npm ci
+
+    - name: Build Demo App ÌøóÔ∏è
+      working-directory: frontend
+      run: npm run build
+      env:
+        REACT_APP_DEMO_MODE: true
+        PUBLIC_URL: /payflow-pro/demo
+
+    - name: Prepare Documentation Ì≥ö
+      run: |
+        # Copy demo build to docs
+        cp -r frontend/build/* docs/demo/
+        
+        # Update documentation with current stats
+        sed -i "s/YOUR_USERNAME/${{ github.repository_owner }}/g" docs/index.html
+
+    - name: Deploy to GitHub Pages Ì∫Ä
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: docs
