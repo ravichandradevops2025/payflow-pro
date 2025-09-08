@@ -1,4 +1,3 @@
-
 name: Deploy PayFlow Pro to GitHub Pages
 
 on:
@@ -20,20 +19,20 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout í»Žï¸
+    - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Setup Node.js í³¦
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
 
-    - name: Install Frontend Dependencies í´§
+    - name: Install Frontend Dependencies
       working-directory: frontend
       run: |
         npm install --legacy-peer-deps
 
-    - name: Create Demo Environment í¼
+    - name: Create Demo Environment
       working-directory: frontend
       run: |
         cat > .env.production << 'EOL'
@@ -47,7 +46,7 @@ jobs:
         ESLINT_NO_DEV_ERRORS=true
         EOL
 
-    - name: Build React App í¿—ï¸
+    - name: Build React App
       working-directory: frontend
       run: |
         npm run build
@@ -55,14 +54,14 @@ jobs:
         PUBLIC_URL: /payflow-pro
         CI: false
 
-    - name: Create 404.html for GitHub Pages í³„
+    - name: Create 404.html for GitHub Pages
       run: |
         cp frontend/build/index.html frontend/build/404.html
 
-    - name: Setup Pages í³„
+    - name: Setup Pages
       uses: actions/configure-pages@v4
 
-    - name: Upload Artifact ï¿½ï¿½
+    - name: Upload Artifact
       uses: actions/upload-pages-artifact@v3
       with:
         path: frontend/build
@@ -75,6 +74,6 @@ jobs:
     needs: build
     
     steps:
-    - name: Deploy to GitHub Pages íº€
+    - name: Deploy to GitHub Pages
       id: deployment
       uses: actions/deploy-pages@v4
