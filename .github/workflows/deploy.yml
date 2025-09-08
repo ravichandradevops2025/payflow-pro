@@ -1,0 +1,114 @@
+
+name: Deploy PayFlow Pro to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout í»Žï¸
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js í³¦
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install Frontend Dependencies í´§
+      working-directory: frontend
+      run: npm ci
+
+    - name: Create Demo Environment í¼
+      working-directory: frontend
+      run: |
+        cat > .env.production << 'EOL'
+        REACT_APP_API_BASE_URL=/payflow-pro/api
+        REACT_APP_APP_NAME=PayFlow Pro - Live Demo
+        REACT_APP_VERSION=1.0.0
+        REACT_APP_ENVIRONMENT=demo
+        REACT_APP_DEMO_MODE=true
+        EOL
+
+    - name: Build React App í¿—ï¸
+      working-directory: frontend
+      run: |
+        npm run build
+      env:
+        PUBLIC_URL: /payflow-pro
+
+    - name: Create Demo API í³¡
+      run: |
+        mkdir -p frontend/build/api
+        cat > frontend/build/api/demo-data.json << 'EOL'
+        {
+          "employees": [
+            {
+              "id": "1",
+              "employee_code": "EMP001",
+              "first_name": "John",
+              "last_name": "Doe",
+              "email": "john.doe@company.com",
+              "department_name": "Engineering",
+              "designation_title": "Senior Developer",
+              "is_active": true,
+              "joining_date": "2023-01-15"
+            },
+            {
+              "id": "2", 
+              "employee_code": "EMP002",
+              "first_name": "Jane",
+              "last_name": "Smith",
+              "email": "jane.smith@company.com",
+              "department_name": "Human Resources", 
+              "designation_title": "HR Manager",
+              "is_active": true,
+              "joining_date": "2022-06-10"
+            }
+          ],
+          "payroll": [
+            {
+              "id": "1",
+              "period": "January 2024",
+              "total_employees": 25,
+              "total_amount": "â‚¹12,50,000",
+              "status": "Approved"
+            }
+          ]
+        }
+        EOL
+
+    - name: Setup Pages í³„
+      uses: actions/configure-pages@v4
+
+    - name: Upload Artifact í³¤
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: frontend/build
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    
+    steps:
+    - name: Deploy to GitHub Pages íº€
+      id: deployment
+      uses: actions/deploy-pages@v4
