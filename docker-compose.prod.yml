@@ -1,0 +1,112 @@
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    container_name: payflow-postgres-prod
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./backups:/backups
+    networks:
+      - payflow-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: payflow-redis-prod
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - payflow-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: payflow-backend-prod
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - payflow-network
+    restart: always
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: payflow-frontend-prod
+    environment:
+      REACT_APP_API_BASE_URL: ${API_BASE_URL}
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    volumes:
+      - ./ssl:/etc/ssl:ro
+    networks:
+      - payflow-network
+    restart: always
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: payflow-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - payflow-network
+    restart: always
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+
+networks:
+  payflow-network:
+    driver: bridge
